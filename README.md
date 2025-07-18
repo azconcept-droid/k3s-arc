@@ -71,6 +71,19 @@ kubectl create secret generic controller-manager \
   --from-file=github_app_private_key=path/to/private-key.pem
 ```
 
+Then, patch it
+
+```bash
+kubectl label secret controller-manager \
+  -n actions-runner-system \
+  app.kubernetes.io/managed-by=Helm --overwrite
+
+kubectl annotate secret controller-manager \
+  -n action-runner-ns \
+  meta.helm.sh/release-name=arc \
+  meta.helm.sh/release-namespace=actions-runner-system --overwrite
+```
+
 To get the **installation ID**, visit:
 
 `https://api.github.com/users/YOUR_USERNAME/installations`
@@ -111,15 +124,24 @@ helm repo update
 
 Then install ARC:
 
+### 📎 Bonus: YAML + Helm Tips
+
+You can also use a values.yaml like:
+
+```yaml
+githubApp:
+  enabled: true
+  appId: 123456
+  installationId: 987654
+  privateKeyFile: /etc/actions-runner-controller/github_app_private_key
+```
+
+Then install with:
+
 ```bash
 helm upgrade --install arc actions-runner-controller/actions-runner-controller \
-  --namespace actions-runner-system \
-  --set authSecret.create=true \
-  --set githubWebhookServer.enabled=false \
-  --set githubApp.enabled=true \
-  --set githubApp.appId=<APP_ID> \
-  --set githubApp.installationId=<INSTALLATION_ID> \
-  --set githubApp.privateKeyFile=/etc/actions-runner-controller/github_app_private_key \
+  -n actions-runner-system \
+  -f values.yaml
 ```
 
 > ARC will read the private key from the secret we created earlier.
@@ -155,30 +177,6 @@ kubectl apply -f runner-deployment.yaml
 
 Go to your repo → **Settings → Actions → Runners**
 You should see your runner registered and online.
-
----
-
-### 📎 Bonus: YAML + Helm Tips
-
-You can also use a values.yaml like:
-
-```yaml
-githubApp:
-  enabled: true
-  appId: 123456
-  installationId: 987654
-  privateKeyFile: /etc/actions-runner-controller/github_app_private_key
-```
-
-Then install with:
-
-```bash
-helm upgrade --install arc actions-runner-controller/actions-runner-controller \
-  -n actions-runner-system \
-  -f values.yaml
-```
-
-Note: This disables the webhook server for simplicity. You can enable it later if needed.
 
 ---
 
