@@ -8,9 +8,10 @@ Before you start:
 
 1. ✅ A Linux server with **k3s** installed.
 2. ✅ `kubectl` access to the k3s cluster.
-3. ✅ A GitHub **App** created and configured.
-4. ✅ Private key file (`.pem`) for the app.
-5. ✅ A GitHub repo or org where you want to register the runners.
+3. ✅ Set env variable export `KUBECONFIG=/etc/rancher/k3s/k3s.yaml`.
+4. ✅ A GitHub **App** created and configured.
+5. ✅ Private key file (`.pem`) for the app.
+6. ✅ A GitHub repo or org where you want to register the runners.
 
 
 ## ✅ Why GitHub App?
@@ -30,13 +31,15 @@ Go to: [https://github.com/settings/apps/new](https://github.com/settings/apps/n
 #### Fill in:
 
 * **GitHub App name**: e.g. `arc-runner-app`
-* **Homepage URL**: any (e.g. `https://example.com`)
+* **Homepage URL**: any (e.g. `github-username/repo`)
 * **Webhook URL**: leave empty (for now)
 * **Permissions**:
 
   * **Repository**:
 
     * `Actions` → Read & write
+    * `Administration` → Read & write
+    * `Access to checks, code, metadata, and pull requests` → Read-only
     * `Metadata` → Read-only
   * (Optional: for org runners, use `Organization` > `Self-hosted runners`)
 * **Subscribe to events**:
@@ -163,6 +166,10 @@ spec:
   template:
     spec:
       repository: your-user/your-repo
+      labels:
+        - self-hosted
+        - linux
+        - x64
 ```
 
 Apply it:
@@ -177,6 +184,7 @@ kubectl apply -f runner-deployment.yaml
 
 Go to your repo → **Settings → Actions → Runners**
 You should see your runner registered and online.
+![alt text](image-1.png)
 
 ---
 
@@ -185,10 +193,10 @@ You should see your runner registered and online.
 You can verify the runner is running:
 
 ```bash
-kubectl get pods -n github-runners
-kubectl logs <runner-pod-name> -n github-runners
+kubectl get pods -n actions-runner-system
+kubectl logs <runner-pod-name> -n actions-runner-system
 ```
-
+![alt text](image.png)
 ---
 
 ## 🧼 Cleanup (Optional)
